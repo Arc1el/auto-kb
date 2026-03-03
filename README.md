@@ -124,3 +124,7 @@ rm -rf ~/.claude/plugins/auto-kb
 ## 라이선스
 
 MIT
+
+## 감사 및 출처
+
+- [`skills/obsidian-cli`](skills/obsidian-cli/SKILL.md), [`skills/obsidian-markdown`](skills/obsidian-markdown/SKILL.md) 파일은 [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) 에서 가져왔습니다. MIT 라이선스 © Stephan Ango (kepano)

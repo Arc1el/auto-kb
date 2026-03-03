@@ -39,6 +39,7 @@ else
   echo "[done] 커밋: $COMMIT_MSG"
 
   # [3] 백그라운드 KB 에이전트 실행 (커밋이 실제로 발생한 경우에만)
+  PROJECT=$(basename "$(dirname "$AUTO_DOCS")")
   nohup env -u CLAUDECODE claude --dangerously-skip-permissions --add-dir "$AUTO_DOCS" -p \
 "작업 디렉토리는 $AUTO_DOCS 야. \
 1. 우선 bash로 'git -C $AUTO_DOCS rev-parse HEAD~1 2>/dev/null' 실행해서 이전 커밋이 존재하는지 확인해. \
@@ -48,7 +49,12 @@ else
 2. '$AUTO_DOCS/docs/kb/' 폴더(없으면 생성) 내에 이 주제와 관련된 기존 마크다운(.md) 문서가 있는지 검색해라. \
 3. 관련 문서가 존재한다면 그 파일을 읽고 이번 업데이트 내용을 하단에 자연스럽게 이어서 작성해라. \
 4. 관련 문서가 없다면 적절한 제목으로 새 마크다운 문서를 생성해라. \
-5. 모든 문서 작업이 끝나면 조용히 종료해라." \
+문서는 obsidian-markdown 스킬 규칙을 따라 작성해라 (frontmatter, wikilinks, callouts 활용). \
+5. 문서 저장 후 obsidian-cli 스킬을 사용해 Obsidian에 저장해라: \
+노트가 이미 존재하면 'obsidian create path=\"KB/$PROJECT/<파일명>\" content=\"<내용>\" overwrite silent', \
+없으면 'obsidian create name=\"<제목>\" path=\"KB/$PROJECT/<파일명>\" content=\"<내용>\" silent'. \
+멀티라인은 \\n으로 이스케이프해라. \
+6. 모든 작업이 끝나면 조용히 종료해라." \
   > /dev/null 2>&1 &
   echo "[done] KB 에이전트 실행됨 (PID: $!)"
 fi

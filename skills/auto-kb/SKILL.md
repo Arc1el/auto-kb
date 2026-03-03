@@ -23,20 +23,27 @@ description: This skill should be used automatically after completing any comple
 | 파일 | 역할 |
 |------|------|
 | `scripts/setup.sh` | 환경 감지, shell function 설치, auto-approve 등록 |
-| `scripts/sync.sh [커밋메시지]` | 세션 로그 커밋 + KB 에이전트 백그라운드 실행 |
+| `scripts/sync.sh [커밋메시지]` | 세션 로그 커밋 + KB 에이전트 백그라운드 실행 (Obsidian 자동 저장 포함) |
+| `scripts/obsidian-push.sh` | 기존 KB + Blog 문서를 Obsidian vault에 batch 동기화 |
 
 ## 동작 원리
 
 `cc`로 Claude를 실행하면 현재 프로젝트 디렉토리에 `.auto-kb/` 폴더가 생성된다.
-세션 로그와 KB 문서는 모두 이 프로젝트별 `.auto-kb/` 안에 저장된다.
+세션 로그와 KB 문서는 모두 이 프로젝트별 `.auto-kb/` 안에 저장되고, Obsidian vault에도 자동 동기화된다.
 
 ```
 <프로젝트>/
   .auto-kb/
     .git/              # 독립 git repo
     .claude_raw.md     # 세션 로그
-    docs/kb/           # KB 문서
+    docs/kb/           # KB 문서 (로컬 소스 오브 트루스)
+
+Obsidian Vault/
+  KB/<프로젝트>/       # KB 문서 자동 동기화 (Obsidian frontmatter 포함)
+  Blog/<프로젝트>/     # Blog 포스트 자동 동기화
 ```
+
+환경변수 `OBSIDIAN_VAULT`로 vault 경로를 지정할 수 있다 (기본: `~/Documents/Obsidian Vault`).
 
 ## 실행 절차
 
