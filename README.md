@@ -1,25 +1,27 @@
 # auto-kb
 
-> Claude Code 세션 로그를 자동 커밋하고, 백그라운드 KB(지식 베이스) 문서를 자동 생성하는 플러그인
+> Claude Code 세션 로그를 프로젝트별로 자동 커밋하고, 백그라운드 KB(지식 베이스) 문서를 자동 생성하는 플러그인
 
 ## 한눈에 보기
 
 ```
-cc (alias로 Claude 실행)
-│  ← .claude_raw.md에 세션 전체 기록
-▼
-작업 수행
+~/my-project/ 에서 cc 실행
+│
+├─ .auto-kb/ 자동 생성 (프로젝트별 독립 git repo)
+│   ├─ .claude_raw.md   ← 세션 전체 기록
+│   └─ docs/kb/          ← KB 문서 자동 생성
 │
 ├─ [자동] Stop 훅: 매 턴 종료마다 미커밋 줄 수 체크
 │         3000줄 이상 → sync.sh 자동 실행
 │
 └─ [자동] auto-kb 스킬: 복잡한 작업 완료 시 자동 트리거
           → sync.sh 실행
-              │
-              ├─ git add + commit
+              ├─ git add + commit (.auto-kb 내부 repo)
               └─ KB 에이전트 (백그라운드)
-                    └─ docs/kb/ 문서 생성/업데이트
+                    └─ .auto-kb/docs/kb/ 문서 생성/업데이트
 ```
+
+**프로젝트마다 `.auto-kb/` 폴더가 독립적으로 생성**되어 세션 로그와 KB가 섞이지 않습니다.
 
 ## 설치
 
@@ -47,18 +49,32 @@ git -C ~/.claude/plugins/auto-kb pull
 
 ### 셋업이 자동으로 처리하는 항목
 
-- `~/Documents/auto-docs/` 폴더 및 git 초기화
-- shell alias `cc` 등록 (`~/.zshrc` / `~/.bashrc`)
+- shell function `cc` 등록 (`~/.zshrc` / `~/.bashrc`)
 - `settings.json` auto-approve 권한 추가
 - Stop 훅 자동 등록
+- 이전 버전(alias 방식) 자동 감지 및 제거
 
 ### 설치 후
 
-터미널을 완전히 닫고 새로 연 뒤 `cc`로 실행:
+터미널을 완전히 닫고 새로 연 뒤, **프로젝트 디렉토리에서** `cc`로 실행:
 
 ```bash
-cc   # = script -q -a ~/Documents/auto-docs/.claude_raw.md claude
+cd ~/my-project
+cc   # → .auto-kb/ 자동 생성 + Claude Code 실행
 ```
+
+## 프로젝트별 `.auto-kb/` 구조
+
+```
+~/my-project/
+  .auto-kb/
+    .git/              # 독립 git repo (프로젝트 git과 별개)
+    .claude_raw.md     # 이 프로젝트 전용 세션 로그
+    docs/kb/           # 이 프로젝트 전용 KB 문서
+```
+
+- `cc`를 실행한 디렉토리에 자동 생성됩니다.
+- 프로젝트의 `.gitignore`에 `.auto-kb/`가 자동으로 추가됩니다.
 
 ## 구성 요소
 
@@ -82,24 +98,16 @@ cc   # = script -q -a ~/Documents/auto-docs/.claude_raw.md claude
 ## 결과물
 
 ```bash
-ls ~/Documents/auto-docs/docs/kb/           # KB 문서
-git -C ~/Documents/auto-docs log --oneline   # 커밋 히스토리
-cat /tmp/auto_kb_hook.log                    # 훅 실행 로그
+ls .auto-kb/docs/kb/                       # 현재 프로젝트 KB 문서
+git -C .auto-kb log --oneline              # 커밋 히스토리
+cat /tmp/auto_kb_hook.log                  # 훅 실행 로그
 ```
 
 ## 설정
 
-### 경로 변경
-
-기본 경로 `~/Documents/auto-docs`를 바꾸려면 `AUTO_DOCS` 환경변수를 설정:
-
-```bash
-export AUTO_DOCS="$HOME/my-custom-path"
-```
-
 ### alias 이름 변경
 
-기본 alias `cc`가 충돌하면 다른 이름으로 설치:
+기본 function `cc`가 충돌하면 다른 이름으로 설치:
 
 ```bash
 ALIAS_NAME=ccc bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/setup.sh
@@ -111,7 +119,7 @@ ALIAS_NAME=ccc bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/setup.sh
 rm -rf ~/.claude/plugins/auto-kb
 ```
 
-`settings.json`의 훅/auto-approve 항목과 shell rc 파일의 alias는 수동 제거가 필요합니다.
+`settings.json`의 훅/auto-approve 항목과 shell rc 파일의 function은 수동 제거가 필요합니다.
 
 ## 라이선스
 

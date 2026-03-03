@@ -22,8 +22,21 @@ description: This skill should be used automatically after completing any comple
 
 | 파일 | 역할 |
 |------|------|
-| `scripts/setup.sh` | 환경 감지, auto-docs git 초기화, shell alias 자동 설치 |
+| `scripts/setup.sh` | 환경 감지, shell function 설치, auto-approve 등록 |
 | `scripts/sync.sh [커밋메시지]` | 세션 로그 커밋 + KB 에이전트 백그라운드 실행 |
+
+## 동작 원리
+
+`cc`로 Claude를 실행하면 현재 프로젝트 디렉토리에 `.auto-kb/` 폴더가 생성된다.
+세션 로그와 KB 문서는 모두 이 프로젝트별 `.auto-kb/` 안에 저장된다.
+
+```
+<프로젝트>/
+  .auto-kb/
+    .git/              # 독립 git repo
+    .claude_raw.md     # 세션 로그
+    docs/kb/           # KB 문서
+```
 
 ## 실행 절차
 
@@ -41,6 +54,7 @@ bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/setup.sh
 bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/sync.sh "feat: <이번 작업 핵심 내용>"
 ```
 
+- `.auto-kb/` 폴더가 없으면 자동으로 건너뜀
 - `.claude_raw.md` 가 없으면 자동으로 건너뜀
 - 변경사항이 없으면 ("nothing to commit") 자동으로 건너뜀
 

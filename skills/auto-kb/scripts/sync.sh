@@ -5,12 +5,26 @@
 
 set -e
 
-AUTO_DOCS="${AUTO_DOCS:-$HOME/Documents/auto-docs}"
+find_auto_kb() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    [ -d "$dir/.auto-kb" ] && echo "$dir/.auto-kb" && return 0
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+AUTO_DOCS="${AUTO_DOCS:-$(find_auto_kb 2>/dev/null || echo "")}"
 COMMIT_MSG="${1:-"chore: 세션 로그 동기화"}"
+
+if [ -z "$AUTO_DOCS" ]; then
+  echo "[skip] .auto-kb 폴더를 찾을 수 없음 — 프로젝트 디렉토리에서 'cc'로 실행하세요."
+  exit 0
+fi
 
 # [1] .claude_raw.md 존재 확인
 if [ ! -f "$AUTO_DOCS/.claude_raw.md" ]; then
-  echo "[skip] .claude_raw.md 없음 — 로깅 비활성 상태. setup.sh를 먼저 실행하세요."
+  echo "[skip] .claude_raw.md 없음 — 로깅 비활성 상태. 'cc'로 실행하세요."
   exit 0
 fi
 

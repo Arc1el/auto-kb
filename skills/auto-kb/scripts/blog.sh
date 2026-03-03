@@ -2,8 +2,22 @@
 # auto-kb: KB 문서 → 블로그 포맷 변환
 # 실행: bash blog.sh [파일명1 파일명2 ...]  ← 인자 없으면 대화형 선택
 
-AUTO_DOCS="${AUTO_DOCS:-$HOME/Documents/auto-docs}"
+find_auto_kb() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    [ -d "$dir/.auto-kb" ] && echo "$dir/.auto-kb" && return 0
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+AUTO_DOCS="${AUTO_DOCS:-$(find_auto_kb 2>/dev/null || echo "")}"
 KB_DIR="$AUTO_DOCS/docs/kb"
+
+if [ -z "$AUTO_DOCS" ]; then
+  echo "[error] .auto-kb 폴더를 찾을 수 없음 — 프로젝트 디렉토리에서 'cc'로 먼저 실행하세요."
+  exit 1
+fi
 
 # KB 폴더 확인
 if [ ! -d "$KB_DIR" ]; then

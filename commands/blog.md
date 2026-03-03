@@ -3,14 +3,14 @@ description: KB 문서를 블로그 포스트로 변환
 allowed-tools: Bash(bash:*), Bash(find:*), Bash(ls:*), Bash(echo:*)
 ---
 
-KB 문서 목록을 확인하고, 사용자가 선택한 파일을 블로그 포스트로 변환한다.
+현재 프로젝트의 `.auto-kb/docs/kb/` 내 KB 문서 목록을 확인하고, 사용자가 선택한 파일을 블로그 포스트로 변환한다.
 
 ## 실행 절차
 
 ### 1. 블로그 미생성 문서 목록 확인
 
 ```bash
-find "${AUTO_DOCS:-$HOME/Documents/auto-docs}/docs/kb" \
+find "${AUTO_DOCS:-.auto-kb}/docs/kb" \
   -maxdepth 1 -name "*.md" ! -name "*-blog.md" \
   | sort | nl -ba
 ```
