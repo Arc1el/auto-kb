@@ -91,12 +91,17 @@ for FNAME in "${SELECTED[@]}"; do
 
   echo "[run] 블로그 변환 중: $FNAME → $BLOG_NAME"
 
+  VAULT_PATH="${OBSIDIAN_VAULT:-$HOME/Documents/Obsidian Vault}"
+  PROJECT=$(basename "$(dirname "$AUTO_DOCS")")
+  TODAY=$(date +%Y-%m-%d)
+  BLOG_VAULT_DEST="$VAULT_PATH/Blog/$PROJECT/$BLOG_NAME"
   nohup env -u CLAUDECODE claude --dangerously-skip-permissions \
     --add-dir "$KB_DIR" -p \
 "아래 KB 문서를 개발자 블로그 포스트로 변환해줘.
 
 [원본 파일]: $SRC
 [출력 파일]: $DEST
+[Obsidian 저장 경로]: $BLOG_VAULT_DEST
 
 변환 규칙:
 1. 원본 파일을 읽어서 내용을 파악해라.
@@ -108,8 +113,18 @@ for FNAME in "${SELECTED[@]}"; do
    - 마무리: 핵심 요약 + 배운 점 또는 다음 단계
 3. 분량: 1000~2000자 내외 (원본 내용에 따라 조절)
 4. 말투: 한국어, 친근하지만 전문적인 개발자 블로그 톤
-5. 완성된 블로그 포스트를 $DEST 에 저장해라.
-6. 저장 완료 후 조용히 종료해라." \
+5. 포스트 맨 위에 Obsidian frontmatter를 추가해라:
+   ---
+   tags:
+     - blog
+     - auto-generated
+   date: $TODAY
+   project: $PROJECT
+   source: auto-kb
+   ---
+6. 완성된 블로그 포스트를 $DEST 에 저장해라.
+7. 저장 후 bash로 'mkdir -p \"$(dirname "$BLOG_VAULT_DEST")\"' 실행하고, $DEST를 $BLOG_VAULT_DEST 에도 복사해라.
+8. 모든 작업이 끝나면 조용히 종료해라." \
     >> "/tmp/auto_kb_blog.log" 2>&1 &
 
   echo "[done] 에이전트 실행됨 (PID: $!) → $BLOG_NAME"

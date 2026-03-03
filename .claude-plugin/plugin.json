@@ -12,6 +12,7 @@
   "license": "MIT",
   "keywords": ["knowledge-base", "session-log", "automation", "git", "documentation"],
   "skills": ["skills/auto-kb"],
+  "commands": ["commands/kb-sync.md", "commands/blog.md", "commands/obsidian-push.md"],
   "hooks": {
     "Stop": [
       {
