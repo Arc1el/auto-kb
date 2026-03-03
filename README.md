@@ -18,7 +18,8 @@
           → sync.sh 실행
               ├─ git add + commit (.auto-kb 내부 repo)
               └─ KB 에이전트 (백그라운드)
-                    └─ .auto-kb/docs/kb/ 문서 생성/업데이트
+                    ├─ .auto-kb/docs/kb/ 문서 생성/업데이트  (obsidian-markdown 스킬 활용)
+                    └─ Obsidian vault/KB/<project>/          (obsidian-cli 스킬로 저장)
 ```
 
 **프로젝트마다 `.auto-kb/` 폴더가 독립적으로 생성**되어 세션 로그와 KB가 섞이지 않습니다.
@@ -78,14 +79,35 @@ cc   # → .auto-kb/ 자동 생성 + Claude Code 실행
 
 ## 구성 요소
 
+### 스킬
+
 | 파일 | 역할 |
 |------|------|
 | `skills/auto-kb/SKILL.md` | 작업 완료 시 자동 트리거 |
+| `skills/obsidian-cli/SKILL.md` | `obsidian` CLI로 Obsidian 노트 생성/수정 |
+| `skills/obsidian-markdown/SKILL.md` | Obsidian 마크다운 작성 규칙 (wikilinks, callouts, frontmatter 등) |
+
+### 스크립트
+
+| 파일 | 역할 |
+|------|------|
 | `skills/auto-kb/scripts/setup.sh` | 최초 1회 환경 셋업 |
-| `skills/auto-kb/scripts/sync.sh` | 커밋 + KB 에이전트 실행 |
-| `skills/auto-kb/scripts/blog.sh` | KB 문서 → 블로그 포스트 변환 |
+| `skills/auto-kb/scripts/sync.sh` | 커밋 + KB 에이전트 실행 (Obsidian 저장 포함) |
+| `skills/auto-kb/scripts/blog.sh` | KB 문서 → 블로그 포스트 변환 (Obsidian 저장 포함) |
+| `scripts/obsidian-push.sh` | 기존 KB/Blog 문서를 Obsidian vault에 batch 동기화 |
+
+### 커맨드
+
+| 파일 | 역할 |
+|------|------|
 | `commands/kb-sync.md` | `/kb-sync` 수동 실행 커맨드 |
 | `commands/blog.md` | `/blog` 블로그 변환 커맨드 |
+| `commands/obsidian-push.md` | `/obsidian-push` Obsidian 수동 동기화 커맨드 |
+
+### 기타
+
+| 파일 | 역할 |
+|------|------|
 | `hooks/auto_kb_hook.sh` | Stop 훅 — 3000줄 이상 시 자동 sync |
 | `.claude-plugin/plugin.json` | 플러그인 메타데이터 + 훅 자동 등록 |
 
