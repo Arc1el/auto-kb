@@ -11,6 +11,7 @@
   },
   "license": "MIT",
   "keywords": ["knowledge-base", "session-log", "automation", "git", "documentation"],
+  "skills": ["skills/auto-kb"],
   "hooks": {
     "Stop": [
       {
