@@ -91,40 +91,29 @@ for FNAME in "${SELECTED[@]}"; do
 
   echo "[run] 블로그 변환 중: $FNAME → $BLOG_NAME"
 
-  VAULT_PATH="${OBSIDIAN_VAULT:-$HOME/Documents/Obsidian Vault}"
   PROJECT=$(basename "$(dirname "$AUTO_DOCS")")
-  TODAY=$(date +%Y-%m-%d)
-  BLOG_VAULT_DEST="$VAULT_PATH/Blog/$PROJECT/$BLOG_NAME"
   nohup env -u CLAUDECODE claude --dangerously-skip-permissions \
     --add-dir "$KB_DIR" -p \
 "아래 KB 문서를 개발자 블로그 포스트로 변환해줘.
 
 [원본 파일]: $SRC
 [출력 파일]: $DEST
-[Obsidian 저장 경로]: $BLOG_VAULT_DEST
 
 변환 규칙:
 1. 원본 파일을 읽어서 내용을 파악해라.
-2. 블로그 포스트 형식으로 재작성해라:
+2. obsidian-markdown 스킬 규칙을 따라 블로그 포스트를 작성해라:
    - 제목: 독자의 관심을 끄는 제목 (기술적이되 읽고 싶게)
    - 도입부: 어떤 문제를 해결했는지, 왜 이 글을 읽어야 하는지
-   - 본문: 핵심 내용을 스토리텔링 방식으로 설명 (단순 나열 X)
+   - 본문: 핵심 내용을 스토리텔링 방식으로 설명 (callouts, wikilinks 활용)
    - 코드 예시: 있다면 설명과 함께 포함
    - 마무리: 핵심 요약 + 배운 점 또는 다음 단계
 3. 분량: 1000~2000자 내외 (원본 내용에 따라 조절)
 4. 말투: 한국어, 친근하지만 전문적인 개발자 블로그 톤
-5. 포스트 맨 위에 Obsidian frontmatter를 추가해라:
-   ---
-   tags:
-     - blog
-     - auto-generated
-   date: $TODAY
-   project: $PROJECT
-   source: auto-kb
-   ---
-6. 완성된 블로그 포스트를 $DEST 에 저장해라.
-7. 저장 후 bash로 'mkdir -p \"$(dirname "$BLOG_VAULT_DEST")\"' 실행하고, $DEST를 $BLOG_VAULT_DEST 에도 복사해라.
-8. 모든 작업이 끝나면 조용히 종료해라." \
+5. 완성된 블로그 포스트를 $DEST 에 저장해라.
+6. 저장 후 obsidian-cli 스킬을 사용해 Obsidian에 저장해라:
+   obsidian create path=\"Blog/$PROJECT/$BLOG_NAME\" content=\"<내용>\" overwrite silent
+   멀티라인은 \\n으로 이스케이프해라.
+7. 모든 작업이 끝나면 조용히 종료해라." \
     >> "/tmp/auto_kb_blog.log" 2>&1 &
 
   echo "[done] 에이전트 실행됨 (PID: $!) → $BLOG_NAME"
