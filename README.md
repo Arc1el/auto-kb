@@ -5,15 +5,15 @@
 ## 아키텍처
 
 ```
-~/my-project/ 에서 cc 실행
+~/my-project/ 에서 cc (= claude) 실행
 │
-├─ Obsidian Vault에 직접 기록
-│   ├─ Sessions/my-project/2026-03-03_143022.md  ← 세션별 로그
-│   ├─ KB/my-project/*.md                        ← KB 문서
-│   └─ Blog/my-project/*.md                      ← 블로그 변환
+├─ [자동] Stop 훅: JSONL transcript → 클린 마크다운 변환
+│         obsidian_session_hook.py 가 매 턴 후 실행
+│         ├─ Sessions/my-project/2026-03-03_143022.md  ← 세션별 로그 (클린)
+│         └─ ANSI 코드 없음, 구조화된 User/Assistant 형식
 │
-├─ [자동] Stop 훅: 미처리 줄 수 체크
-│         3000줄 이상 → 마커 업데이트
+├─ KB/my-project/*.md                        ← KB 문서
+└─ Blog/my-project/*.md                      ← 블로그 변환
 │
 └─ [자동] auto-kb 스킬: 복잡한 작업 완료 시 자동 트리거
           └─ background-secretary 서브에이전트에 위임
@@ -103,7 +103,8 @@ cc   # → Claude Code 실행 + Obsidian vault에 세션 로그 자동 기록
 | `commands/setup.md` | `/auto-kb:setup` 초기 설정 |
 | `commands/kb-sync.md` | `/auto-kb:kb-sync` 수동 KB 동기화 |
 | `commands/blog.md` | `/auto-kb:blog` 블로그 변환 |
-| `hooks/auto_kb_hook.sh` | Stop 훅 — 미처리 감지 |
+| `hooks/auto_kb_hook.sh` | Stop 훅 — obsidian_session_hook.py 호출 |
+| `hooks/obsidian_session_hook.py` | JSONL → 클린 Obsidian 마크다운 변환 |
 | `skills/auto-kb/scripts/setup.sh` | 대화형 환경 셋업 스크립트 |
 | `skills/auto-kb/scripts/sync.sh` | 세션 상태 확인 |
 
