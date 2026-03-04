@@ -1,6 +1,6 @@
 {
   "name": "auto-kb",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Automatically logs Claude Code sessions per project and delegates KB documentation to the background-secretary subagent, writing directly to Obsidian vault.",
   "author": {
     "name": "jayden"

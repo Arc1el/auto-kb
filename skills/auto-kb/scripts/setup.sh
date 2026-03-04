@@ -146,7 +146,9 @@ else
   echo "        재설정: /auto-kb:setup --reconfigure"
 fi
 
-# ── [2] shell function 설치 ──────────────────────────────────────────────────
+# ── [2] 이전 cc 함수 정리 (마이그레이션) ────────────────────────────────────
+# v3.1 이하: script -q 또는 claude "$@" 래퍼가 shell rc에 설치되어 있었음
+# v3.2+: Stop 훅이 자동 처리하므로 cc 함수 불필요 → 제거
 
 SHELL_RC=""
 case "$SHELL" in
@@ -155,79 +157,23 @@ case "$SHELL" in
   *)      SHELL_RC="$HOME/.profile" ;;
 esac
 
-FUNC_NAME="${ALIAS_NAME:-cc}"
-FUNC_MARKER="# auto-kb:${FUNC_NAME}"
-FUNC_FRESH=0
-FUNC_CONFLICT=0
-
-# 이전 버전(alias, .auto-kb 방식, --plugin-dir 방식) 자동 제거
-if [ -n "$SHELL_RC" ]; then
-  if grep -q "auto-docs/.claude_raw.md" "$SHELL_RC" 2>/dev/null || \
+if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
+  if grep -q "# auto-kb:" "$SHELL_RC" 2>/dev/null || \
+     grep -q "auto-docs/.claude_raw.md" "$SHELL_RC" 2>/dev/null || \
      grep -q "\.auto-kb" "$SHELL_RC" 2>/dev/null || \
      grep -q "\-\-plugin-dir" "$SHELL_RC" 2>/dev/null; then
     python3 -c "
 import re, pathlib
 rc = pathlib.Path('$SHELL_RC')
 text = rc.read_text()
-text = re.sub(r'\n# auto-kb: Claude 세션 자동 로깅\nalias ${FUNC_NAME}=.*\n', '\n', text)
-text = re.sub(r'\n# auto-kb:${FUNC_NAME}\n${FUNC_NAME}\(\) \{[^}]+\}\n', '\n', text, flags=re.DOTALL)
+# 모든 auto-kb cc 관련 블록 제거 (다양한 형태)
+text = re.sub(r'\n# auto-kb:[^\n]*\n\w+\(\) \{[^}]*\}\n?', '\n', text, flags=re.DOTALL)
+text = re.sub(r'\n# auto-kb: Claude 세션 자동 로깅\nalias \w+=.*\n', '\n', text)
 rc.write_text(text)
-print('[migrate] 이전 버전 제거 완료')
-"
-  fi
-fi
-
-if [ -n "$SHELL_RC" ]; then
-  # script -q wrapper(구버전) 감지
-  _HAS_SCRIPT_WRAPPER=0
-  if grep -qF "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null; then
-    if grep -A20 "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null | grep -q "script -q"; then
-      _HAS_SCRIPT_WRAPPER=1
-    fi
-  fi
-
-  if grep -qF "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null && \
-     ! grep -q "\.auto-kb" "$SHELL_RC" 2>/dev/null && \
-     ! grep -q "\-\-plugin-dir" "$SHELL_RC" 2>/dev/null && \
-     [ "$_HAS_SCRIPT_WRAPPER" -eq 0 ]; then
-    : # 최신 auto-kb function 이미 설치됨
+print('[migrate] shell rc에서 auto-kb cc 함수 제거 완료')
+" && echo "[done] $SHELL_RC 정리"
   else
-    # 이전 마커가 있으면 제거 후 재설치
-    if grep -qF "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null; then
-      python3 -c "
-import re, pathlib
-rc = pathlib.Path('$SHELL_RC')
-text = rc.read_text()
-text = re.sub(r'\n# auto-kb:${FUNC_NAME}\n.*?\n\}', '', text, flags=re.DOTALL)
-rc.write_text(text)
-"
-    elif grep -qE "^(function ${FUNC_NAME} |${FUNC_NAME}\(\))" "$SHELL_RC" 2>/dev/null || \
-         grep -qE "^alias ${FUNC_NAME}=" "$SHELL_RC" 2>/dev/null; then
-      FUNC_CONFLICT=1
-      EXISTING=$(grep -E "^(function ${FUNC_NAME} |${FUNC_NAME}\(\)|alias ${FUNC_NAME}=)" "$SHELL_RC" | head -1)
-    fi
-
-    if [ "$FUNC_CONFLICT" -eq 0 ]; then
-      cat >> "$SHELL_RC" << 'AUTOKB_FUNC'
-
-# auto-kb:cc
-cc() {
-  claude "$@"
-}
-AUTOKB_FUNC
-
-      if [ "$FUNC_NAME" != "cc" ]; then
-        python3 -c "
-import pathlib
-rc = pathlib.Path('$SHELL_RC')
-text = rc.read_text()
-text = text.replace('# auto-kb:cc', '# auto-kb:${FUNC_NAME}')
-text = text.replace('cc() {', '${FUNC_NAME}() {')
-rc.write_text(text)
-"
-      fi
-      FUNC_FRESH=1
-    fi
+    echo "[check] shell rc 정리 불필요"
   fi
 fi
 
@@ -281,30 +227,12 @@ fi
 
 # ── 최종 상태 보고 ──────────────────────────────────────────────────────────
 
-if [ "$FUNC_CONFLICT" -eq 1 ]; then
-  echo ""
-  echo "╔══════════════════════════════════════════════════════════════╗"
-  echo "║  [충돌] 이미 다른 용도의 '${FUNC_NAME}' 이 존재합니다               ║"
-  echo "╠══════════════════════════════════════════════════════════════╣"
-  echo "║  기존: $EXISTING"
-  echo "║                                                              ║"
-  echo "║  해결 방법 (택 1):                                          ║"
-  echo "║  A) 기존 함수/alias를 변경한 뒤 다시 setup.sh 실행          ║"
-  echo "║  B) 다른 이름으로 설치:                                     ║"
-  echo "║     ALIAS_NAME=ccc /auto-kb:setup                           ║"
-  echo "╚══════════════════════════════════════════════════════════════╝"
-elif [ "$FUNC_FRESH" -eq 1 ]; then
-  echo ""
-  echo "╔══════════════════════════════════════════════════════════════╗"
-  echo "║  auto-kb 설정 완료 — 적용하려면:                            ║"
-  echo "╠══════════════════════════════════════════════════════════════╣"
-  echo "║  1. 터미널을 새로 여세요                                    ║"
-  echo "║  2. 프로젝트 디렉토리에서 '${FUNC_NAME}' 로 실행하세요               ║"
-  echo "║     → Obsidian vault에 세션 로그 + KB 자동 생성             ║"
-  echo "║                                                              ║"
-  echo "║  vault 재설정: /auto-kb:setup --reconfigure                 ║"
-  echo "╚══════════════════════════════════════════════════════════════╝"
-else
-  echo "[check] function '${FUNC_NAME}' 이미 설치됨"
-  echo "[check] 환경 점검 완료"
-fi
+echo ""
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║  auto-kb 설정 완료                                          ║"
+echo "╠══════════════════════════════════════════════════════════════╣"
+echo "║  이제 그냥 'claude' 로 실행하면 됩니다                      ║"
+echo "║  Stop 훅이 자동으로 세션을 Obsidian에 기록합니다            ║"
+echo "║                                                              ║"
+echo "║  vault 재설정: /auto-kb:setup --reconfigure                 ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
