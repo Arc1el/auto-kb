@@ -35,7 +35,8 @@ bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/sync.sh
 ### 3단계: KB 문서화 위임
 
 **background-secretary 서브에이전트**에 KB 문서 생성/업데이트를 위임한다.
-서브에이전트는 백그라운드에서 실행되므로 메인 대화를 차단하지 않는다.
+**중요: `run_in_background: false` (foreground)로 실행해야 한다.**
+`run_in_background: true`로 실행하면 pre-approval이 트리거되어 Write/Bash 권한이 거부된다.
 
 서브에이전트가 수행하는 작업:
 1. `~/.config/auto-kb/config.json`에서 vault 설정 읽기
