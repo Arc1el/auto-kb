@@ -8,18 +8,6 @@
   "repository": "https://github.com/Arc1el/auto-kb",
   "license": "MIT",
   "keywords": ["knowledge-base", "session-log", "automation", "obsidian", "documentation", "subagent"],
-  "permissions": {
-    "allow": [
-      "Write(~/**/*.md)",
-      "Edit(~/**/*.md)",
-      "Bash(python3*)",
-      "Bash(ls*)",
-      "Bash(cat*)",
-      "Bash(wc*)",
-      "Bash(obsidian*)",
-      "Bash(mkdir*)"
-    ]
-  },
   "hooks": {
     "Stop": [
       {
