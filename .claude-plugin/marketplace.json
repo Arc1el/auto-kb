@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "auto-kb",
-      "source": ".",
+      "source": "./",
       "description": "Automatically logs Claude Code sessions per project and delegates KB documentation to the background-secretary subagent, writing directly to Obsidian vault.",
       "version": "3.0.0",
       "author": {
