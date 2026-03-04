@@ -5,7 +5,7 @@
 ## 아키텍처
 
 ```
-~/my-project/ 에서 cc (= claude) 실행
+claude 실행 (어디서든)
 │
 ├─ [자동] Stop 훅: JSONL transcript → 클린 마크다운 변환
 │         obsidian_session_hook.py 가 매 턴 후 실행
@@ -27,7 +27,7 @@
 | 항목 | 설명 |
 |------|------|
 | 저장소 | Obsidian vault (단일 소스 오브 트루스) |
-| 세션 구분 | `cc` 실행마다 타임스탬프 파일 생성 (채팅방처럼 독립) |
+| 세션 구분 | session_id 기준 타임스탬프 파일 생성 (채팅방처럼 독립) |
 | KB 생성 | background-secretary 서브에이전트 (haiku, background) |
 | 학습 | `memory: project` — 프로젝트별 패턴 축적 |
 | 설정 | `~/.config/auto-kb/config.json` — vault 경로, 폴더 구조 |
@@ -59,15 +59,14 @@ Claude Code 내에서:
 
 ### 3. 사용
 
-터미널을 새로 열고, **프로젝트 디렉토리에서** `cc`로 실행:
+그냥 `claude`로 실행하면 됩니다:
 
 ```bash
 cd ~/my-project
-cc   # → Claude Code 실행 + Obsidian vault에 세션 로그 자동 기록
+claude   # → Stop 훅이 자동으로 Obsidian vault에 세션 로그 기록
 ```
 
 > 마켓플레이스를 통해 설치하면 agents, hooks, skills, commands가 모든 세션에서 자동 로딩됩니다.
-> `cc`는 세션 로그 기록만 추가합니다.
 
 ### 업데이트
 
@@ -135,12 +134,6 @@ cc   # → Claude Code 실행 + Obsidian vault에 세션 로그 자동 기록
 
 ```
 /auto-kb:setup --reconfigure
-```
-
-### alias 이름 변경
-
-```bash
-ALIAS_NAME=ccc bash <plugin-root>/skills/auto-kb/scripts/setup.sh
 ```
 
 ## 삭제
