@@ -157,6 +157,26 @@ if [ -n "$VAULT_PATH" ] && [ -d "$VAULT_PATH" ]; then
   mkdir -p "$VAULT_PATH/$KB_PATH"
   mkdir -p "$VAULT_PATH/$BLOG_PATH"
   echo "[done] vault 디렉토리 준비: Sessions / KB / Blog"
+
+  # vault 경로를 settings.json additionalDirectories에 등록
+  SETTINGS="$HOME/.claude/settings.json"
+  if [ -f "$SETTINGS" ]; then
+    python3 -c "
+import json
+from pathlib import Path
+
+settings = Path('$SETTINGS')
+s = json.loads(settings.read_text())
+dirs = s.setdefault('permissions', {}).setdefault('additionalDirectories', [])
+vault = '$VAULT_PATH'
+if vault not in dirs:
+    dirs.append(vault)
+    settings.write_text(json.dumps(s, indent=2, ensure_ascii=False))
+    print('[done] vault 경로를 additionalDirectories에 등록:', vault)
+else:
+    print('[check] additionalDirectories 이미 등록됨')
+"
+  fi
 fi
 
 # ── [2] 이전 cc 함수 정리 (마이그레이션) ────────────────────────────────────
