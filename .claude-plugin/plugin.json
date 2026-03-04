@@ -8,9 +8,6 @@
   "repository": "https://github.com/Arc1el/auto-kb",
   "license": "MIT",
   "keywords": ["knowledge-base", "session-log", "automation", "obsidian", "documentation", "subagent"],
-  "agents": "./agents/",
-  "skills": ["./skills/auto-kb", "./skills/obsidian-cli", "./skills/obsidian-markdown"],
-  "commands": ["./commands/setup.md", "./commands/kb-sync.md", "./commands/blog.md"],
   "hooks": {
     "Stop": [
       {
