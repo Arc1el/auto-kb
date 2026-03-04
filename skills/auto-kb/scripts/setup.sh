@@ -146,6 +146,19 @@ else
   echo "        재설정: /auto-kb:setup --reconfigure"
 fi
 
+# ── [1.5] vault 디렉토리 생성 ────────────────────────────────────────────────
+VAULT_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['vault_path'])" 2>/dev/null)
+SESSIONS_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('sessions_path','Sessions'))" 2>/dev/null)
+KB_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('kb_path','KB'))" 2>/dev/null)
+BLOG_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('blog_path','Blog'))" 2>/dev/null)
+
+if [ -n "$VAULT_PATH" ] && [ -d "$VAULT_PATH" ]; then
+  mkdir -p "$VAULT_PATH/$SESSIONS_PATH"
+  mkdir -p "$VAULT_PATH/$KB_PATH"
+  mkdir -p "$VAULT_PATH/$BLOG_PATH"
+  echo "[done] vault 디렉토리 준비: Sessions / KB / Blog"
+fi
+
 # ── [2] 이전 cc 함수 정리 (마이그레이션) ────────────────────────────────────
 # v3.1 이하: script -q 또는 claude "$@" 래퍼가 shell rc에 설치되어 있었음
 # v3.2+: Stop 훅이 자동 처리하므로 cc 함수 불필요 → 제거
