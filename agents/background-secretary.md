@@ -4,7 +4,7 @@ description: "프로젝트 세션 로그를 분석하여 KB 문서를 자동 생
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: haiku
 background: true
-permissionMode: acceptEdits
+permissionMode: bypassPermissions
 memory: project
 skills:
   - obsidian-cli
@@ -32,10 +32,23 @@ cat ~/.config/auto-kb/config.json
 
 ### 1단계: 최근 세션 파일 찾기
 
+`session_state.json`에서 가장 최근 세션 파일을 찾는다:
+
 ```bash
-PROJECT=$(basename "$(pwd)")
-ls -t "$VAULT_PATH/$SESSIONS_PATH/$PROJECT/"*.md | head -1
+python3 -c "
+import json, os
+from pathlib import Path
+state_file = Path.home() / '.config/auto-kb/session_state.json'
+if not state_file.exists():
+    exit(1)
+state = json.loads(state_file.read_text())
+files = [(v, os.path.getmtime(v)) for v in state.values() if os.path.exists(v)]
+if files:
+    print(max(files, key=lambda x: x[1])[0])
+"
 ```
+
+PROJECT는 세션 파일의 부모 디렉토리명에서 추출한다.
 
 ### 2단계: 세션 로그 분석
 
