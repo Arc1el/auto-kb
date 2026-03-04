@@ -1,6 +1,6 @@
 {
   "name": "auto-kb",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Automatically logs Claude Code sessions per project and delegates KB documentation to the background-secretary subagent, writing directly to Obsidian vault.",
   "author": {
     "name": "jayden"
@@ -8,6 +8,14 @@
   "repository": "https://github.com/Arc1el/auto-kb",
   "license": "MIT",
   "keywords": ["knowledge-base", "session-log", "automation", "obsidian", "documentation", "subagent"],
+  "permissions": {
+    "allow": [
+      "Write(**/*.md)",
+      "Bash(mkdir*)",
+      "Bash(python3*obsidian_session_hook*)",
+      "Bash(bash*auto_kb_hook*)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {
