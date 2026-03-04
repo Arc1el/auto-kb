@@ -1,18 +1,16 @@
 {
   "name": "auto-kb",
-  "version": "1.0.0",
-  "description": "Automatically commits session logs and runs a background KB documentation agent after completing tasks.",
+  "version": "3.0.0",
+  "description": "Automatically logs Claude Code sessions per project and delegates KB documentation to the background-secretary subagent, writing directly to Obsidian vault.",
   "author": {
     "name": "jayden"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Arc1el/auto-kb.git"
-  },
+  "repository": "https://github.com/Arc1el/auto-kb",
   "license": "MIT",
-  "keywords": ["knowledge-base", "session-log", "automation", "git", "documentation"],
+  "keywords": ["knowledge-base", "session-log", "automation", "obsidian", "documentation", "subagent"],
+  "agents": "./agents/",
   "skills": ["skills/auto-kb", "skills/obsidian-cli", "skills/obsidian-markdown"],
-  "commands": ["commands/kb-sync.md", "commands/blog.md", "commands/obsidian-push.md"],
+  "commands": ["commands/setup.md", "commands/kb-sync.md", "commands/blog.md"],
   "hooks": {
     "Stop": [
       {

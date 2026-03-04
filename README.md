@@ -1,125 +1,161 @@
 # auto-kb
 
-> Claude Code 세션 로그를 프로젝트별로 자동 커밋하고, 백그라운드 KB(지식 베이스) 문서를 자동 생성하는 플러그인
+> Claude Code 세션 로그를 프로젝트별로 Obsidian vault에 직접 기록하고, **background-secretary 서브에이전트**가 KB 문서를 자동 생성하는 플러그인
 
-## 한눈에 보기
+## 아키텍처
 
 ```
 ~/my-project/ 에서 cc 실행
 │
-├─ .auto-kb/ 자동 생성 (프로젝트별 독립 git repo)
-│   ├─ .claude_raw.md   ← 세션 전체 기록
-│   └─ docs/kb/          ← KB 문서 자동 생성
+├─ Obsidian Vault에 직접 기록
+│   ├─ Sessions/my-project/2026-03-03_143022.md  ← 세션별 로그
+│   ├─ KB/my-project/*.md                        ← KB 문서
+│   └─ Blog/my-project/*.md                      ← 블로그 변환
 │
-├─ [자동] Stop 훅: 매 턴 종료마다 미커밋 줄 수 체크
-│         3000줄 이상 → sync.sh 자동 실행
+├─ [자동] Stop 훅: 미처리 줄 수 체크
+│         3000줄 이상 → 마커 업데이트
 │
 └─ [자동] auto-kb 스킬: 복잡한 작업 완료 시 자동 트리거
-          → sync.sh 실행
-              ├─ git add + commit (.auto-kb 내부 repo)
-              └─ KB 에이전트 (백그라운드)
-                    └─ .auto-kb/docs/kb/ 문서 생성/업데이트
+          └─ background-secretary 서브에이전트에 위임
+                ├─ 세션 로그 분석
+                ├─ obsidian-cli로 KB 문서 생성/업데이트
+                └─ 프로젝트별 학습 축적 (memory: project)
 ```
 
-**프로젝트마다 `.auto-kb/` 폴더가 독립적으로 생성**되어 세션 로그와 KB가 섞이지 않습니다.
+### 핵심 설계
+
+| 항목 | 설명 |
+|------|------|
+| 저장소 | Obsidian vault (단일 소스 오브 트루스) |
+| 세션 구분 | `cc` 실행마다 타임스탬프 파일 생성 (채팅방처럼 독립) |
+| KB 생성 | background-secretary 서브에이전트 (haiku, background) |
+| 학습 | `memory: project` — 프로젝트별 패턴 축적 |
+| 설정 | `~/.config/auto-kb/config.json` — vault 경로, 폴더 구조 |
 
 ## 설치
 
-### 방법 1: 원클릭 설치
+### 1. 마켓플레이스 등록 + 플러그인 설치
 
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Arc1el/auto-kb/main/install.sh)
+Claude Code 내에서:
+
+```
+/plugin marketplace add Arc1el/auto-kb
+/plugin install auto-kb@auto-kb-marketplace
 ```
 
-### 방법 2: 수동 설치
+### 2. 초기 설정
 
-```bash
-# 1. 클론
-git clone https://github.com/Arc1el/auto-kb.git ~/.claude/plugins/auto-kb
+설치 후 Claude Code 내에서 셋업 커맨드 실행:
 
-# 2. 초기 셋업
-bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/setup.sh
+```
+/auto-kb:setup
 ```
 
-### 업데이트
+대화형으로 설정:
 
-```bash
-git -C ~/.claude/plugins/auto-kb pull
-```
+1. **Obsidian vault 선택** — `obsidian list`에서 자동 감지 또는 직접 입력
+2. **폴더 구조 설정** — Sessions/KB/Blog 경로 (기본값 제공)
+3. **`cc` shell function 설치** — 세션 로깅 래퍼
 
-### 셋업이 자동으로 처리하는 항목
+### 3. 사용
 
-- shell function `cc` 등록 (`~/.zshrc` / `~/.bashrc`)
-- `settings.json` auto-approve 권한 추가
-- Stop 훅 자동 등록
-- 이전 버전(alias 방식) 자동 감지 및 제거
-
-### 설치 후
-
-터미널을 완전히 닫고 새로 연 뒤, **프로젝트 디렉토리에서** `cc`로 실행:
+터미널을 새로 열고, **프로젝트 디렉토리에서** `cc`로 실행:
 
 ```bash
 cd ~/my-project
-cc   # → .auto-kb/ 자동 생성 + Claude Code 실행
+cc   # → Claude Code 실행 + Obsidian vault에 세션 로그 자동 기록
 ```
 
-## 프로젝트별 `.auto-kb/` 구조
+> 마켓플레이스를 통해 설치하면 agents, hooks, skills, commands가 모든 세션에서 자동 로딩됩니다.
+> `cc`는 세션 로그 기록만 추가합니다.
+
+### 업데이트
 
 ```
-~/my-project/
-  .auto-kb/
-    .git/              # 독립 git repo (프로젝트 git과 별개)
-    .claude_raw.md     # 이 프로젝트 전용 세션 로그
-    docs/kb/           # 이 프로젝트 전용 KB 문서
+/plugin marketplace update auto-kb-marketplace
+/plugin update auto-kb@auto-kb-marketplace
 ```
 
-- `cc`를 실행한 디렉토리에 자동 생성됩니다.
-- 프로젝트의 `.gitignore`에 `.auto-kb/`가 자동으로 추가됩니다.
+## Obsidian Vault 내 구조
+
+```
+<Vault>/
+├── Sessions/
+│   └── my-project/
+│       ├── 2026-03-03_143022.md    ← cc 1회차
+│       ├── 2026-03-03_161545.md    ← cc 2회차
+│       └── 2026-03-04_091230.md    ← cc 3회차
+├── KB/
+│   └── my-project/
+│       ├── topic-a.md
+│       └── topic-b.md
+└── Blog/
+    └── my-project/
+        └── topic-a-blog.md
+```
 
 ## 구성 요소
 
 | 파일 | 역할 |
 |------|------|
+| `agents/background-secretary.md` | KB 생성 + 블로그 변환 서브에이전트 |
 | `skills/auto-kb/SKILL.md` | 작업 완료 시 자동 트리거 |
-| `skills/auto-kb/scripts/setup.sh` | 최초 1회 환경 셋업 |
-| `skills/auto-kb/scripts/sync.sh` | 커밋 + KB 에이전트 실행 |
-| `skills/auto-kb/scripts/blog.sh` | KB 문서 → 블로그 포스트 변환 |
-| `commands/kb-sync.md` | `/kb-sync` 수동 실행 커맨드 |
-| `commands/blog.md` | `/blog` 블로그 변환 커맨드 |
-| `hooks/auto_kb_hook.sh` | Stop 훅 — 3000줄 이상 시 자동 sync |
-| `.claude-plugin/plugin.json` | 플러그인 메타데이터 + 훅 자동 등록 |
+| `commands/setup.md` | `/auto-kb:setup` 초기 설정 |
+| `commands/kb-sync.md` | `/auto-kb:kb-sync` 수동 KB 동기화 |
+| `commands/blog.md` | `/auto-kb:blog` 블로그 변환 |
+| `hooks/auto_kb_hook.sh` | Stop 훅 — 미처리 감지 |
+| `skills/auto-kb/scripts/setup.sh` | 대화형 환경 셋업 스크립트 |
+| `skills/auto-kb/scripts/sync.sh` | 세션 상태 확인 |
 
 ## 수동 실행
 
 ```
-/kb-sync
-```
-
-## 결과물
-
-```bash
-ls .auto-kb/docs/kb/                       # 현재 프로젝트 KB 문서
-git -C .auto-kb log --oneline              # 커밋 히스토리
-cat /tmp/auto_kb_hook.log                  # 훅 실행 로그
+/auto-kb:kb-sync
+/auto-kb:blog
 ```
 
 ## 설정
 
+### 설정 파일
+
+`~/.config/auto-kb/config.json`:
+
+```json
+{
+  "vault": "My Vault",
+  "vault_path": "/path/to/vault",
+  "sessions_path": "Sessions",
+  "kb_path": "KB",
+  "blog_path": "Blog"
+}
+```
+
+### vault 재설정
+
+```
+/auto-kb:setup --reconfigure
+```
+
 ### alias 이름 변경
 
-기본 function `cc`가 충돌하면 다른 이름으로 설치:
-
 ```bash
-ALIAS_NAME=ccc bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/setup.sh
+ALIAS_NAME=ccc bash <plugin-root>/skills/auto-kb/scripts/setup.sh
 ```
 
 ## 삭제
 
-```bash
-rm -rf ~/.claude/plugins/auto-kb
+Claude Code 내에서:
+
+```
+/plugin uninstall auto-kb@auto-kb-marketplace
+/plugin marketplace remove auto-kb-marketplace
 ```
 
-`settings.json`의 훅/auto-approve 항목과 shell rc 파일의 function은 수동 제거가 필요합니다.
+shell rc 파일(`~/.zshrc` 등)에서 `# auto-kb:cc` 블록과 `~/.config/auto-kb/` 디렉토리는 수동 제거:
+
+```bash
+rm -rf ~/.config/auto-kb
+```
 
 ## 라이선스
 
@@ -127,4 +163,4 @@ MIT
 
 ## 감사 및 출처
 
-- [`skills/obsidian-cli`](skills/obsidian-cli/SKILL.md), [`skills/obsidian-markdown`](skills/obsidian-markdown/SKILL.md) 파일은 [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) 에서 가져왔습니다. MIT 라이선스 © Stephan Ango (kepano)
+- `skills/obsidian-cli`, `skills/obsidian-markdown` 파일은 [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills)에서 가져왔습니다. MIT 라이선스 (c) Stephan Ango (kepano)

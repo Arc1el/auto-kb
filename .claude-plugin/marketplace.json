@@ -1,0 +1,25 @@
+{
+  "name": "auto-kb-marketplace",
+  "owner": {
+    "name": "jayden"
+  },
+  "metadata": {
+    "description": "Claude Code 세션 로그를 프로젝트별로 Obsidian vault에 기록하고 KB 문서를 자동 생성하는 플러그인"
+  },
+  "plugins": [
+    {
+      "name": "auto-kb",
+      "source": ".",
+      "description": "Automatically logs Claude Code sessions per project and delegates KB documentation to the background-secretary subagent, writing directly to Obsidian vault.",
+      "version": "3.0.0",
+      "author": {
+        "name": "jayden"
+      },
+      "homepage": "https://github.com/Arc1el/auto-kb",
+      "repository": "https://github.com/Arc1el/auto-kb",
+      "license": "MIT",
+      "keywords": ["knowledge-base", "session-log", "automation", "obsidian", "documentation", "subagent"],
+      "category": "productivity"
+    }
+  ]
+}

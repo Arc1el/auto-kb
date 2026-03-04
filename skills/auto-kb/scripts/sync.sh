@@ -1,60 +1,36 @@
 #!/usr/bin/env bash
-# auto-kb: 세션 로그 커밋 + KB 에이전트 백그라운드 실행
-# 실행: bash ~/.claude/plugins/auto-kb/skills/auto-kb/scripts/sync.sh "커밋 메시지"
-# 인자 없으면 기본 메시지 사용
+# auto-kb: 현재 세션 로그 상태 확인
+# background-secretary 서브에이전트가 KB 생성 시 참조할 정보를 출력
+# 실행: bash sync.sh
 
 set -e
 
-find_auto_kb() {
-  local dir="$PWD"
-  while [ "$dir" != "/" ]; do
-    [ -d "$dir/.auto-kb" ] && echo "$dir/.auto-kb" && return 0
-    dir="$(dirname "$dir")"
-  done
-  return 1
-}
+CONFIG_FILE="$HOME/.config/auto-kb/config.json"
 
-AUTO_DOCS="${AUTO_DOCS:-$(find_auto_kb 2>/dev/null || echo "")}"
-COMMIT_MSG="${1:-"chore: 세션 로그 동기화"}"
-
-if [ -z "$AUTO_DOCS" ]; then
-  echo "[skip] .auto-kb 폴더를 찾을 수 없음 — 프로젝트 디렉토리에서 'cc'로 실행하세요."
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "[skip] 설정 없음 — setup.sh를 먼저 실행하세요."
   exit 0
 fi
 
-# [1] .claude_raw.md 존재 확인
-if [ ! -f "$AUTO_DOCS/.claude_raw.md" ]; then
-  echo "[skip] .claude_raw.md 없음 — 로깅 비활성 상태. 'cc'로 실행하세요."
+VAULT_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['vault_path'])")
+SESSIONS_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('sessions_path','Sessions'))")
+PROJECT=$(basename "$(pwd)")
+SESSION_DIR="$VAULT_PATH/$SESSIONS_PATH/$PROJECT"
+
+if [ ! -d "$SESSION_DIR" ]; then
+  echo "[skip] 세션 폴더 없음: $SESSION_DIR — 'cc'로 실행하세요."
   exit 0
 fi
 
-# [2] 변경사항 확인 후 커밋
-cd "$AUTO_DOCS"
-git add .claude_raw.md
+# 가장 최근 세션 파일 찾기
+LATEST=$(ls -t "$SESSION_DIR"/*.md 2>/dev/null | head -1)
 
-if git diff --cached --quiet; then
-  echo "[skip] 변경사항 없음 — 커밋 및 에이전트 실행 건너뜀"
-else
-  git commit -m "$COMMIT_MSG"
-  echo "[done] 커밋: $COMMIT_MSG"
-
-  # [3] 백그라운드 KB 에이전트 실행 (커밋이 실제로 발생한 경우에만)
-  PROJECT=$(basename "$(dirname "$AUTO_DOCS")")
-  nohup env -u CLAUDECODE claude --dangerously-skip-permissions --add-dir "$AUTO_DOCS" -p \
-"작업 디렉토리는 $AUTO_DOCS 야. \
-1. 우선 bash로 'git -C $AUTO_DOCS rev-parse HEAD~1 2>/dev/null' 실행해서 이전 커밋이 존재하는지 확인해. \
-존재하면 'git -C $AUTO_DOCS diff HEAD~1 HEAD'를, 없으면 'git -C $AUTO_DOCS show HEAD'를 실행해서 변경 내용을 분석해. \
-이 diff 안에는 claude_raw.md 세션 대화(시행착오, 에러 로그 등)가 모두 들어있어. \
-이를 바탕으로 이번 작업의 핵심 주제와 해결 과정을 파악해라. \
-2. '$AUTO_DOCS/docs/kb/' 폴더(없으면 생성) 내에 이 주제와 관련된 기존 마크다운(.md) 문서가 있는지 검색해라. \
-3. 관련 문서가 존재한다면 그 파일을 읽고 이번 업데이트 내용을 하단에 자연스럽게 이어서 작성해라. \
-4. 관련 문서가 없다면 적절한 제목으로 새 마크다운 문서를 생성해라. \
-문서는 obsidian-markdown 스킬 규칙을 따라 작성해라 (frontmatter, wikilinks, callouts 활용). \
-5. 문서 저장 후 obsidian-cli 스킬을 사용해 Obsidian에 저장해라: \
-노트가 이미 존재하면 'obsidian create path=\"KB/$PROJECT/<파일명>\" content=\"<내용>\" overwrite silent', \
-없으면 'obsidian create name=\"<제목>\" path=\"KB/$PROJECT/<파일명>\" content=\"<내용>\" silent'. \
-멀티라인은 \\n으로 이스케이프해라. \
-6. 모든 작업이 끝나면 조용히 종료해라." \
-  > /dev/null 2>&1 &
-  echo "[done] KB 에이전트 실행됨 (PID: $!)"
+if [ -z "$LATEST" ]; then
+  echo "[skip] 세션 파일 없음"
+  exit 0
 fi
+
+LINES=$(wc -l < "$LATEST" | tr -d ' ')
+echo "[info] 프로젝트: $PROJECT"
+echo "[info] 최근 세션: $(basename "$LATEST") (${LINES}줄)"
+echo "[info] vault: $VAULT_PATH"
