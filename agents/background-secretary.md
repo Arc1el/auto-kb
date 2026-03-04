@@ -3,7 +3,6 @@ name: background-secretary
 description: "프로젝트 세션 로그를 분석하여 KB 문서를 자동 생성/업데이트하고, KB 문서를 블로그 포스트로 변환하는 백그라운드 비서. 복잡한 작업 완료 후 proactively 사용한다. 블로그 변환 요청 시에도 사용한다."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: haiku
-background: true
 permissionMode: bypassPermissions
 memory: project
 skills:
