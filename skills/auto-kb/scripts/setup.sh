@@ -178,9 +178,18 @@ print('[migrate] 이전 버전 제거 완료')
 fi
 
 if [ -n "$SHELL_RC" ]; then
+  # script -q wrapper(구버전) 감지
+  _HAS_SCRIPT_WRAPPER=0
+  if grep -qF "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null; then
+    if grep -A20 "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null | grep -q "script -q"; then
+      _HAS_SCRIPT_WRAPPER=1
+    fi
+  fi
+
   if grep -qF "$FUNC_MARKER" "$SHELL_RC" 2>/dev/null && \
      ! grep -q "\.auto-kb" "$SHELL_RC" 2>/dev/null && \
-     ! grep -q "\-\-plugin-dir" "$SHELL_RC" 2>/dev/null; then
+     ! grep -q "\-\-plugin-dir" "$SHELL_RC" 2>/dev/null && \
+     [ "$_HAS_SCRIPT_WRAPPER" -eq 0 ]; then
     : # 최신 auto-kb function 이미 설치됨
   else
     # 이전 마커가 있으면 제거 후 재설치
@@ -203,21 +212,7 @@ rc.write_text(text)
 
 # auto-kb:cc
 cc() {
-  local config="$HOME/.config/auto-kb/config.json"
-  if [ ! -f "$config" ]; then
-    echo "[auto-kb] 설정 없음. Claude Code에서 /auto-kb:setup 을 실행하세요."
-    return 1
-  fi
-  local vault_path
-  vault_path=$(python3 -c "import json; print(json.load(open('$config'))['vault_path'])")
-  local sessions_path
-  sessions_path=$(python3 -c "import json; print(json.load(open('$config')).get('sessions_path','Sessions'))")
-  local project
-  project=$(basename "$(pwd)")
-  local session_dir="$vault_path/$sessions_path/$project"
-  mkdir -p "$session_dir"
-  local session_file="$session_dir/$(date +%Y-%m-%d_%H%M%S).md"
-  AUTOKB_SESSION="$session_file" script -q "$session_file" claude
+  claude "$@"
 }
 AUTOKB_FUNC
 
